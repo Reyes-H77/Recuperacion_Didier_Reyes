@@ -1,4 +1,5 @@
 <?php
+session_name("freefire_session");
 require '../../DB/conection.php';
 $db = new Database();
 $pdo = $db->conectar();

@@ -1,6 +1,8 @@
 <?php
+session_name("freefire_session");
 session_start();
 require_once("DB/conection.php");
+
 $db = new Database();
 $con = $db->conectar();
 
@@ -8,36 +10,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $usuario = trim($_POST['usuario']);
     $clave = $_POST['clave'];
 
-    // Verificar usuario
+    // Buscar usuario en la BD
     $query = $con->prepare("SELECT * FROM usuario WHERE username = :usuario");
     $query->bindParam(':usuario', $usuario);
     $query->execute();
     $data = $query->fetch(PDO::FETCH_ASSOC);
 
+    // Verificación de usuario y contraseña
     if ($data && password_verify($clave, $data['contrasena'])) {
-        // Validar si está bloqueado
+
+        // Verificar si la cuenta está bloqueada
         if ($data['id_estado'] == 2) {
-            echo "<script>alert('Tu cuenta está bloqueada. Espera la activación del administrador.'); window.location='index.php';</script>";
+            echo "<script>
+                    alert('Tu cuenta está bloqueada. Espera la activación del administrador.');
+                    window.location='index.php';
+                  </script>";
             exit();
         }
 
-        // Guardar sesión
+        // Guardar sesión de usuario
         $_SESSION['id_user'] = $data['id_user'];
         $_SESSION['username'] = $data['username'];
-        $_SESSION['id_tip_user'] = $data['id_tip_user']; // admin o jugador
+        $_SESSION['id_tip_user'] = $data['id_tip_user']; // 1 = admin, 2 = jugador
+        $_SESSION['pregunta_aprobada'] = false; // inicia como no aprobada
 
-        // Redirigir según tipo de usuario
-        if ($data['id_tip_user'] == 1) {
-          header("Location: modulo/ADMIN/index.php");
-        } elseif ($data['id_tip_user'] == 2) {
-          header("Location: modulo/USERS/index.php");
-        
-        } else {
-            echo "<script>alert('Tipo de usuario desconocido.'); window.location='index.php';</script>";
-        }
+        // 🔹 Redirigir a preguntas (sin pasar por ningún login adicional)
+        header("Location: preguntas_pascal.php");
         exit();
+
     } else {
-        echo "<script>alert('Usuario o contraseña incorrectos.'); window.location='index.php';</script>";
+        echo "<script>
+                alert('Usuario o contraseña incorrectos.');
+                window.location='index.php';
+              </script>";
         exit();
     }
 }

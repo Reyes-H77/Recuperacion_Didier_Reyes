@@ -1,4 +1,5 @@
 <?php
+session_name("freefire_session");
 session_start();
 require '../../DB/conection.php';
 $db = new Database();
